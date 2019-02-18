@@ -4,7 +4,7 @@ const morgan = require("morgan");
 const mongoose = require("mongoose");
 
 const articleRoutes = require("./api/routes/articles");
-// const orderRoutes = require("./api/routes/orders");
+const scrapeRoutes = require("./api/routes/scrapes");
 
 var MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
 mongoose.connect(MONGODB_URI, 
@@ -31,6 +31,7 @@ app.use((req, res, next) => {
 
 // // Routes which should handle requests
 app.use("/articles", articleRoutes);
+app.use("/scrape", scrapeRoutes)
 
 app.use((req, res, next) => {
   const error = new Error("Not found");

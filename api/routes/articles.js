@@ -9,9 +9,25 @@ router.get('/', (req, res, next) => {
     Article.find()
         .exec()
         .then(docs => {
-            console.log(docs);
+            const response = {
+                count: docs.length,
+                articles: docs.map(doc => {
+                  return {
+                    headline: doc.headline,
+                    summary: doc.summary,
+                    url: doc.url,
+                    source: doc.source,
+                    category: doc.category,
+                    _id: doc._id,
+                    request: {
+                      type: "GET",
+                      url: "http://localhost:3000/articles/" + doc._id
+                    }
+                };
+              })
+            };
             // if (docs.length > 0) {
-            res.status(200).json(docs);
+            res.status(200).json(response);
             // }
             // else {
             //     res.status(404).json({
@@ -100,6 +116,21 @@ router.delete('/:articleId', (req, res, next) => {
     Article.remove({
             _id: id
         })
+        .exec()
+        .then(result => {
+            res.status(200).json(result);
+        })
+        .catch(err => {
+            console.log(err);
+            res.status(500).json({
+                error: err
+            });
+        });
+});
+
+router.delete('/all', (req, res, next) => {
+    // const id = req.params.articleId;
+    Article.remove()
         .exec()
         .then(result => {
             res.status(200).json(result);
