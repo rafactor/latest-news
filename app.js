@@ -2,20 +2,23 @@ const express = require("express");
 const app = express();
 const morgan = require("morgan");
 const mongoose = require("mongoose");
+const hbs = require("express-handlebars");
 
+const htmlRoutes = require("./api/routes/htmlRoutes")
 const articleRoutes = require("./api/routes/articles");
 const scrapeRoutes = require("./api/routes/scrapes");
 
-var MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
-mongoose.connect(MONGODB_URI, 
-    {
-        useNewUrlParser: true
-    });
+const MONGODB_URI =
+  process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true
+});
 
 app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
+//prevent CORS errors
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header(
@@ -29,9 +32,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// // Routes which should handle requests
-app.use("/articles", articleRoutes);
-app.use("/scrape", scrapeRoutes)
+//Handlebars
+app.engine(
+  "hbs",
+  hbs({
+    extname: "hbs",
+    defaultLayout: "main"
+    // layoutsDir: __dirname + "/views/layouts/"
+  })
+);
+app.set("view engine", "hbs");
+
+// Routes which should handle requests
+app.use("/", htmlRoutes);
+app.use("/api/articles", articleRoutes);
+app.use("/api/scrape", scrapeRoutes);
 
 app.use((req, res, next) => {
   const error = new Error("Not found");
