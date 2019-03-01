@@ -1,52 +1,45 @@
 const express = require("express");
 const app = express();
 const morgan = require("morgan");
+const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
-const hbs = require("express-handlebars");
+require('dotenv').config()
 
-const htmlRoutes = require("./api/routes/htmlRoutes")
 const articleRoutes = require("./api/routes/articles");
-const scrapeRoutes = require("./api/routes/scrapes");
+const htmlRoutes = require("./api/routes/htmlRoutes")
 
-const MONGODB_URI =
-  process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true
-});
-
-app.use(morgan("dev"));
+// Middleware
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+app.use(express.static("public"));
 
-//prevent CORS errors
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-  );
-  if (req.method === "OPTIONS") {
-    res.header("Access-Control-Allow-Methods", "PUT, POST, PATCH, DELETE, GET");
-    return res.status(200).json({});
-  }
-  next();
-});
 
-//Handlebars
-app.engine(
-  "hbs",
-  hbs({
-    extname: "hbs",
-    defaultLayout: "main"
-    // layoutsDir: __dirname + "/views/layouts/"
-  })
-);
-app.set("view engine", "hbs");
 
-// Routes which should handle requests
+
+var MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/express";
+mongoose.connect(MONGODB_URI);
+
+mongoose.Promise = global.Promise;
+
+
+app.use(morgan("dev"));
+app.use(bodyParser.urlencoded({
+  extended: false
+}));
+app.use(bodyParser.json());
+
+
+app.use("/articles", articleRoutes);
 app.use("/", htmlRoutes);
-app.use("/api/articles", articleRoutes);
-app.use("/api/scrape", scrapeRoutes);
+
+
+// Set Handlebars.
+var hbs = require("express-handlebars");
+
+app.engine("handlebars", hbs({
+  defaultLayout: "main"
+}));
+app.set("view engine", "handlebars");
 
 app.use((req, res, next) => {
   const error = new Error("Not found");
@@ -62,5 +55,6 @@ app.use((error, req, res, next) => {
     }
   });
 });
+
 
 module.exports = app;
