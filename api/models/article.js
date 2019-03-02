@@ -8,7 +8,9 @@ const articleSchema = mongoose.Schema({
     department: { type: String, required: false },
     url: { type: String, required: true },
     summary: { type: String, required: true },
-    date: { type: Date, required: true },
+    publishedDate: { type: Date, required: true },
+    createdAt: { type: Date, required: true, default: Date.now }
+    // timestamps: true
     // status: { type: String, required: true, default: "new" },
 });
 

@@ -2,24 +2,25 @@ const express = require("express");
 const router = express.Router();
 const ArticlesController = require("../controllers/articles")
 const ViewedArticlesController = require("../controllers/viewedArticles")
-const NotesController = require("../controllers/articleNotes")
+// const NotesController = require("../controllers/articleNotes")
 
 // const UserController = require('../controllers/user');
 // const checkAuth = require('../middleware/check-auth');
+
+
+router.get("/view",ViewedArticlesController.viewed_articles_get_all);
+
+router.get("/:articleId", ViewedArticlesController.view_article);
 
 router.post("/", ArticlesController.articles_scrape);
 
 router.get("/", ArticlesController.articles_get_all);
 
-// router.get("/:articleId", ViewedArticles.view_article);
+// router.get("/view/:articleId", ViewedArticlesController.view_article_detail);
 
-router.get("/view/", ViewedArticlesController.viewed_articles_get_all);
+// router.patch("/view/:articleId", ViewedArticlesController.update_article_flag);
 
-router.get("/view/:articleId", ViewedArticlesController.view_article_detail);
-
-router.patch("/view/:articleId", ViewedArticlesController.update_article_flag);
-
-router.post("/view/:articleId/notes", NotesController.notes_add);
+// router.post("/view/:articleId/notes", NotesController.notes_add);
 
 // router.post("/login", UserController.user_login);
 

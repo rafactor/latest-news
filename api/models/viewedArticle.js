@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const viewedArticles = mongoose.Schema({
+const viewedArticleSchema = mongoose.Schema({
     _id: mongoose.Schema.Types.ObjectId,
     article: {
         type: mongoose.Schema.Types.ObjectId,
@@ -17,4 +17,4 @@ const viewedArticles = mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('ViewedArticles', viewedArticles);
+module.exports = mongoose.model('ViewedArticle', viewedArticleSchema);

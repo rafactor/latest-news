@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Articles = require("../models/article");
 var axios = require("axios");
 var cheerio = require("cheerio");
+const moment = require('moment')
 
 function filterIt(arr, searchKey) {
   return arr.filter(function(obj) {
@@ -13,9 +14,9 @@ function filterIt(arr, searchKey) {
 
 function getSearchUrl(req) {
   const source = "canada";
-  const category = "departmentofcitizenshipandimmigration";
-  const startDate = "2019-01-01";
-  const endDate = "2019-02-28";
+  const category = req.body.category;
+  const startDate = req.body.startDate;
+  const endDate = req.body.endDate;
   const index = 0;
 
   switch (source) {
@@ -57,7 +58,9 @@ exports.articles_scrape = (req, res, next) => {
   var scraped = getSearchUrl(req);
   var counter = 0;
   var alreadyInDB;
+  // var scrapedOn = moment().format()
 
+  // console.log("63", scrapedOn)
 
   Articles.find()
     .select()
@@ -72,8 +75,8 @@ exports.articles_scrape = (req, res, next) => {
         //   Load the html body from axios into cheerio
         var $ = cheerio.load(response.data);
 
-        var $options = $('#dprtmnt').innerHTML
-        console.log("here", $options)
+        // var $options = $('#dprtmnt').innerHTML
+        // console.log(response.data )
 
 
         //   For each article class
@@ -119,9 +122,11 @@ exports.articles_scrape = (req, res, next) => {
                 department: department,
                 url: url,
                 summary: summary,
-                date: date,
-                status: "new"
+                publisheddate: date,
+                status: "new",
               });
+              
+              console.log("129", news)
               news
                 .save()
                 .then(counter++)
@@ -158,7 +163,7 @@ exports.articles_scrape = (req, res, next) => {
 
 exports.articles_get_all = (req, res, next) => {
   Articles.find()
-    .select("source title type department status category url summary")
+    .select("source title type date department status category url summary updatedOn")
     .exec()
     .then(docs => {
       const response = {
@@ -174,6 +179,7 @@ exports.articles_get_all = (req, res, next) => {
             summary: doc.summary,
             date: doc.date,
             status: doc.status,
+            updatedOn: doc.updatedOn,
             request: {
               type: "GET",
               url: "http://localhost:3000/articles/" + doc._id
