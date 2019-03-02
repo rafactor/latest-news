@@ -60,7 +60,7 @@ exports.articles_scrape = (req, res, next) => {
   var alreadyInDB;
   // var scrapedOn = moment().format()
 
-  // console.log("63", scrapedOn)
+  console.log("63", scraped)
 
   Articles.find()
     .select()
@@ -122,8 +122,7 @@ exports.articles_scrape = (req, res, next) => {
                 department: department,
                 url: url,
                 summary: summary,
-                publisheddate: date,
-                status: "new",
+                publishedDate: date,
               });
               
               console.log("129", news)
