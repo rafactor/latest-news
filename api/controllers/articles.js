@@ -1,23 +1,24 @@
 const mongoose = require("mongoose");
 const Articles = require("../models/article");
-var axios = require("axios");
-var cheerio = require("cheerio");
+const axios = require("axios");
+const cheerio = require("cheerio");
 const moment = require('moment')
 
-function filterIt(arr, searchKey) {
-  return arr.filter(function(obj) {
-    return Object.keys(obj).some(function(key) {
-      return obj[key] === searchKey;
-    });
-  });
-}
+// function filterIt(arr, searchKey) {
+//   return arr.filter(function(obj) {
+//     return Object.keys(obj).some(function(key) {
+//       return obj[key] === searchKey;
+//     });
+//   });
+// }
 
 function getSearchUrl(req) {
-  const source = "canada";
-  const category = req.body.category;
+  const source = req.body.source;
+  const type = req.body.type;
+  const department = req.body.department;
   const startDate = req.body.startDate;
   const endDate = req.body.endDate;
-  const index = 0;
+  const index = req.body.index;
 
   switch (source) {
     case "canada":
@@ -27,29 +28,25 @@ function getSearchUrl(req) {
       let key = "_=1551119106311";
 
       let params = {
-        typ: "newsreleases",
-        idx: index * 10,
-        dprtmnt: category,
-        start: startDate,
-        end: endDate
+        type: (type === "" || type === undefined) ? "&typ=" : "&typ=" + type,
+        page: (index >= 0) ? "&idx=" + index * 10 : "&idx=0" ,
+        department: (type === "" || type === undefined) ? "&dprtmnt=" : "&dprtmnt=" + department,
+        start: (type === "" || type === undefined) ? "&start=" : "&start=" + startDate, 
+        end: (type === "" || type === undefined) ? "&end=" : "&end=" + endDate, 
       };
 
       var scrappingUrl = domain + key;
 
       for (key in params) {
-        scrappingUrl += "&" + key + "=" + params[key];
+            scrappingUrl += params[key];
       }
-      break;
-
-    default:
-      res.status(404).json({
-        message: "not found"
-      });
   }
+
+
 
   return {
     url: scrappingUrl,
-    source: source
+    source: "Government of Canada"
   };
 }
 
@@ -58,10 +55,19 @@ exports.articles_scrape = (req, res, next) => {
   var scraped = getSearchUrl(req);
   var counter = 0;
   var alreadyInDB;
+  var scrappedPage = {
+    count: 0,
+    from: 0,
+    to: 0,
+    total: 0,
+    page: 0,
+    pages: 0,
+    request: {},
+    articles: []
+  }
   // var scrapedOn = moment().format()
 
-  console.log("63", scraped)
-
+  console.log(scraped)
   Articles.find()
     .select()
     //add source filter
@@ -78,7 +84,16 @@ exports.articles_scrape = (req, res, next) => {
         // var $options = $('#dprtmnt').innerHTML
         // console.log(response.data )
 
+        const totals = $('.mwsharvest > h3').text().split(" ");
+        scrappedPage.from = totals[1]
+        scrappedPage.to  = totals[3]
+        scrappedPage.total  = totals[5]
+        scrappedPage.page = Math.ceil(totals[1] / 10)
+        scrappedPage.pages = Math.ceil(totals[5] / 10)
+        scrappedPage.request = req.body
+        scrappedPage.source = scraped.source
 
+  
         //   For each article class
         $("article").each(function(i, element) {
           var title = $(element)
@@ -103,8 +118,8 @@ exports.articles_scrape = (req, res, next) => {
             .text();
 
           var splittedline = line.split("|", 3)
-          var department = splittedline[2].trim()
-          var type = splittedline[1].trim()
+          var department = splittedline[1].trim()
+          var type = splittedline[2].trim()
 
           
           // Proceed if the article has an url
@@ -112,10 +127,7 @@ exports.articles_scrape = (req, res, next) => {
             const newsUrl = urlFromDB.filter(searchNews => searchNews === url);
             alreadyInDB = newsUrl.length > 0 ? true : false;
 
-            // Check if the urls already exists in the database
-            if (!alreadyInDB) {
-              const news = new Articles({
-                _id: new mongoose.Types.ObjectId(),
+              scrappedPage.articles.push({
                 source: scraped.source,
                 title: title,
                 type: type,
@@ -123,33 +135,56 @@ exports.articles_scrape = (req, res, next) => {
                 url: url,
                 summary: summary,
                 publishedDate: date,
+                status: newsUrl.length > 0 ? null : "new",
               });
               
-              console.log("129", news)
-              news
-                .save()
-                .then(counter++)
-                .catch(err => {
-                  console.log(err);
-                  res.status(500).json({
-                    error: err
-                  });
-                });
-            }
+            // // Check if the urls already exists in the database
+          
+            //   const news = new Articles({
+            //     _id: new mongoose.Types.ObjectId(),
+            //     source: scraped.source,
+            //     title: title,
+            //     type: type,
+            //     department: department,
+            //     url: url,
+            //     summary: summary,
+            //     publishedDate: date,
+            //   });
+              
+            //   scrappedPage.articles.push(news)
+            //   news
+            //     .save()
+            //     .then(counter++)
+            //     .catch(err => {
+            //       console.log(err);
+            //       res.status(500).json({
+            //         error: err
+            //       });
+            //     });
+            
           }
         });
 
-        if (counter === 0) {
-          message = "You're up to date. There is no news to review.";
-        } else if ((counter === 1)) {
-          message = "1 new article found";
-        } else {
-          message = counter + " new articles found";
-        }
+        console.log(scrappedPage)
 
-        res.status(200).json({
-          message: message
-        });
+        // if (counter === 0) {
+        //   message = "You're up to date. There is no news to review.";
+        // } else if ((counter === 1)) {
+        //   message = "1 new article found";
+        // } else {
+        //   message = counter + " new articles found";
+        // }
+
+        // console.log(" go ")
+        // res.redirect("/latest-news")
+
+        let data = scrappedPage
+        res.render("latest-news", {data, layout: false})
+
+
+        // res.status(200).json({
+        //   scrappedPage
+        // });
       });
     })
     .catch(err => {

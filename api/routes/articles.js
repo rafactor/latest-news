@@ -8,7 +8,7 @@ const ViewedArticlesController = require("../controllers/viewedArticles")
 // const checkAuth = require('../middleware/check-auth');
 
 
-router.get("/view",ViewedArticlesController.viewed_articles_get_all);
+router.get("/view", ViewedArticlesController.viewed_articles_get_all);
 
 router.get("/:articleId", ViewedArticlesController.view_article);
 

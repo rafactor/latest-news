@@ -1,0 +1,11 @@
+<h5 class="page-header">News results from {{ data.request.source }}.</h5>
+<h6>{{#if data.request.startDate}} From {{ data.request.startDate}} {{/if}}</h6>
+<p class="page-header-totals">Showing {{ data.from }} - {{ data.to }} of {{ data.total }} </p>
+<div class="lastest-news">
+    <ul class="news-list list-unstyled">
+        {{#each data.articles}}
+            {{> article}}
+        {{/each}}
+    </ul>
+
+</div>
